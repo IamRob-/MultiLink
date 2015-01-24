@@ -37,7 +37,6 @@ public class MultiLink {
     @EventHandler
     public void init(FMLInitializationEvent event) {
 
-
         LogHelper.info("Initialization Complete!");
     }
 
