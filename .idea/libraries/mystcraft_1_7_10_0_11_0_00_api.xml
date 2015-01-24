@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="mystcraft-1.7.10-0.11.0.00-api">
+    <CLASSES />
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/libs/mystcraft-1.7.10-0.11.0.00-api.jar!/" />
+    </SOURCES>
+  </library>
+</component>
