@@ -7,13 +7,13 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import iamrob.multilink.client.gui.GuiHandler;
+import iamrob.multilink.handler.GuiHandler;
 import iamrob.multilink.init.ModItems;
 import iamrob.multilink.network.PacketHandler;
 import iamrob.multilink.proxy.IProxy;
 import iamrob.multilink.reference.ModInfo;
 import iamrob.multilink.reference.Reference;
-import iamrob.multilink.utility.LogHelper;
+import iamrob.multilink.util.LogHelper;
 
 @Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, dependencies = "required-after:Mystcraft")
 public class MultiLink

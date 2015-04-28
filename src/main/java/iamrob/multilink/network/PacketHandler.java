@@ -9,10 +9,10 @@ import iamrob.multilink.reference.ModInfo;
 public class PacketHandler
 {
 
-    public static final SimpleNetworkWrapper instance = NetworkRegistry.INSTANCE.newSimpleChannel(ModInfo.ID);
+    public static final SimpleNetworkWrapper INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(ModInfo.ID);
 
     public static void init()
     {
-        instance.registerMessage(MessageActivateBook.class, MessageActivateBook.class, 0, Side.SERVER);
+        INSTANCE.registerMessage(MessageActivateBook.class, MessageActivateBook.class, 0, Side.SERVER);
     }
 }

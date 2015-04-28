@@ -1,9 +1,14 @@
 package iamrob.multilink.item;
 
+import com.xcompwiz.mystcraft.api.linking.ILinkInfo;
+import com.xcompwiz.mystcraft.item.ItemLinkbook;
+import com.xcompwiz.mystcraft.item.ItemLinking;
+import com.xcompwiz.mystcraft.linking.LinkController;
+import com.xcompwiz.mystcraft.linking.LinkListenerManager;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import iamrob.multilink.MultiLink;
-import iamrob.multilink.inventory.ContainerLinkHolder;
+import iamrob.multilink.inventory.InventoryLinkHolder;
 import iamrob.multilink.reference.Names;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
@@ -51,7 +56,7 @@ public class ItemLinkHolder extends ItemMultiLink
     @Override
     public IIcon getIcon(ItemStack stack, int pass)
     {
-        int size = linkBookCount(stack).size();
+        int size = getLinkBookCount(stack);
         switch (size) {
             case 0:
                 return emptyIcon;
@@ -62,6 +67,39 @@ public class ItemLinkHolder extends ItemMultiLink
         }
     }
 
+    public int getLinkBookCount(ItemStack holder)
+    {
+        ItemStack[] inventory = getInventory(holder);
+
+        List<Integer> slots = new ArrayList<Integer>();
+        int i = 0;
+        for (ItemStack stack : inventory) {
+            if (stack != null) {
+                slots.add(i);
+            }
+            i++;
+        }
+        return slots.size();
+    }
+
+    public ItemStack[] getInventory(ItemStack stack)
+    {
+        NBTTagCompound nbtTagCompound = stack.getTagCompound();
+        ItemStack[] inventory = new ItemStack[InventoryLinkHolder.inventorySize];
+
+        if (nbtTagCompound != null && nbtTagCompound.hasKey(Names.NBT.ITEMS)) {
+            NBTTagList tagList = nbtTagCompound.getTagList(Names.NBT.ITEMS, 10);
+            for (int i = 0; i < tagList.tagCount(); ++i) {
+                NBTTagCompound tagCompound = tagList.getCompoundTagAt(i);
+                byte slotIndex = tagCompound.getByte("Slot");
+                if (slotIndex >= 0 && slotIndex < inventory.length) {
+                    inventory[slotIndex] = ItemStack.loadItemStackFromNBT(tagCompound);
+                }
+            }
+        }
+        return inventory;
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public boolean requiresMultipleRenderPasses()
@@ -69,51 +107,55 @@ public class ItemLinkHolder extends ItemMultiLink
         return true;
     }
 
-    public ItemStack[] getHolderItems(ItemStack stack)
-    {
-        if (stack.getTagCompound() == null) {
-            return new ItemStack[ContainerLinkHolder.inventorySize];
-        }
-
-        ItemStack[] items = new ItemStack[ContainerLinkHolder.inventorySize];
-
-        NBTTagList list = (NBTTagList) stack.getTagCompound().getTag("link_holder_items");
-
-        for (int i = 0; i < list.tagCount(); i++) {
-            NBTTagCompound link = (NBTTagCompound) list.getCompoundTagAt(i);
-            int index = link.getInteger("index");
-            items[index] = ItemStack.loadItemStackFromNBT(link);
-        }
-
-        return items;
-    }
-
-    public List<Integer> linkBookCount(ItemStack book)
-    {
-        List<Integer> list = new ArrayList<Integer>();
-        int i = 0;
-        for (ItemStack stack : getHolderItems(book)) {
-            if (stack != null) {
-                list.add(i);
-            }
-            i++;
-        }
-        return list;
-    }
-
     @Override
     public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player)
     {
-        if (player.isSneaking()) {
-            if (!world.isRemote) {
+        if (!world.isRemote) {
+            if (player.isSneaking()) {
                 player.openGui(MultiLink.instance, 0, player.worldObj, (int) player.posX, (int) player.posY, (int) player.posZ);
-            }
-        } else {
-            if (!world.isRemote) {
+            } else {
                 player.openGui(MultiLink.instance, 1, player.worldObj, (int) player.posX, (int) player.posY, (int) player.posZ);
             }
         }
         return itemstack;
+    }
+
+    public void linkActivate(int id, World world, EntityPlayer player)
+    {
+        if (world.isRemote) {
+            return;
+        }
+
+        ItemStack bookStack = player.getHeldItem();
+        ItemStack[] inventory = getInventory(bookStack);
+
+        if (inventory[id] == null || !(inventory[id].getItem() instanceof ItemLinkbook)) {
+            return;
+        }
+        ItemStack linkStack = inventory[id];
+        ItemLinking item = (ItemLinking) linkStack.getItem();
+
+        if (linkStack.getTagCompound() == null) {
+            return;
+        }
+
+        ILinkInfo info = item.getLinkInfo(linkStack);
+
+        if (LinkListenerManager.isLinkPermitted(world, player, info)) {
+            int damage = bookStack.getItemDamage();
+            if (damage == bookStack.getMaxDamage()) {
+                for (ItemStack stack : inventory) {
+                    if (stack == null)
+                        continue;
+                    ItemLinking link = (ItemLinking) stack.getItem();
+                    world.spawnEntityInWorld(link.createEntity(world, player, stack));
+                }
+                player.setCurrentItemOrArmor(0, null);
+                return;
+            }
+            LinkController.travelEntity(world, player, info);
+            bookStack.setItemDamage(bookStack.getItemDamage() + 1);
+        }
     }
 
 }
