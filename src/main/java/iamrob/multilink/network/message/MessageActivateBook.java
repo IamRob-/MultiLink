@@ -8,7 +8,7 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 
-public class MessageActivateBook implements IMessage, IMessageHandler<MessageActivateBook, IMessage>
+public class MessageActivateBook implements IMessage
 {
     public byte id;
 
@@ -34,20 +34,22 @@ public class MessageActivateBook implements IMessage, IMessageHandler<MessageAct
         buf.writeByte(id);
     }
 
-    @Override
-    public IMessage onMessage(MessageActivateBook message, MessageContext ctx)
+    public static class Handler implements IMessageHandler<MessageActivateBook, IMessage>
     {
-        EntityPlayer player = ctx.getServerHandler().playerEntity;
+        @Override
+        public IMessage onMessage(MessageActivateBook message, MessageContext ctx)
+        {
+            EntityPlayer player = ctx.getServerHandler().playerEntity;
+            if (player != null) {
+                ItemStack stack = player.getHeldItem();
+                if (stack == null || !(stack.getItem() instanceof ItemLinkHolder))
+                    return null;
 
-        if (player != null) {
-            ItemStack stack = player.getHeldItem();
-            if (stack == null || !(stack.getItem() instanceof ItemLinkHolder))
-                return null;
+                ItemLinkHolder item = (ItemLinkHolder) stack.getItem();
 
-            ItemLinkHolder item = (ItemLinkHolder) stack.getItem();
-
-            item.linkActivate(id, player.worldObj, player);
+                item.linkActivate(message.id, player.worldObj, player);
+            }
+            return null;
         }
-        return null;
     }
 }

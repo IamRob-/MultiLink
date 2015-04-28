@@ -140,7 +140,6 @@ public class ItemLinkHolder extends ItemMultiLink
         }
 
         ILinkInfo info = item.getLinkInfo(linkStack);
-
         if (LinkListenerManager.isLinkPermitted(world, player, info)) {
             int damage = bookStack.getItemDamage();
             if (damage == bookStack.getMaxDamage()) {

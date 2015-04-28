@@ -13,7 +13,6 @@ import net.minecraft.world.WorldProvider;
 import org.lwjgl.opengl.GL11;
 
 import java.util.Arrays;
-import java.util.List;
 
 public class GuiPanel
 {
@@ -30,7 +29,9 @@ public class GuiPanel
 
     private int id;
 
-    public GuiPanel(ItemStack stack, int id)
+    boolean canLink = false;
+
+    public GuiPanel(GuiLinkHolder gui, ItemStack stack, int id)
     {
         this.link = stack;
         this.id = id;
@@ -61,6 +62,7 @@ public class GuiPanel
         xCol = col.xCoord;
         yCol = col.yCoord;
         zCol = col.zCoord;
+
     }
 
     public boolean inRectangle(GuiLinkHolder gui, int mouseX, int mouseY)
@@ -90,21 +92,26 @@ public class GuiPanel
         int dimID = item.getLinkInfo(link).getDimensionUID();
         String title = item.getTitle(link);
         String dim = WorldProvider.getProviderForDimension(dimID).getDimensionName();
-        String str = title.equals(dim) ? title : title + "\n"
-                + EnumChatFormatting.GRAY + dim;
+        String str = title.equals(dim) ? title : title + "\n" + EnumChatFormatting.GRAY + dim;
         drawString(gui, x, y, str);
     }
 
     public void draw(GuiLinkHolder gui)
     {
-        List<ItemStack> inventory = gui.container.getInventory();
+        ItemStack[] inventory = gui.container.getInventoryLinkHolder().getItems();
 
-        ItemStack stack = inventory.get(id);
+        ItemStack stack = inventory[id];
         if (stack != null) {
             GL11.glColor4f(1F, 1F, 1F, 1F);
             gui.drawTexturedModalRect(gui.getLeft() + x, gui.getTop() + y, texture.guiPanelSourceX, texture.guiPanelSourceY, w, h);
 
-            GL11.glColor3d(xCol, yCol, zCol);
+            canLink = gui.container.canLink(id);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            GL11.glDepthMask(false);
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glColor4d(xCol, yCol, zCol, canLink ? 1 : 0.6);
+            GL11.glDisable(GL11.GL_ALPHA_TEST);
 
             gui.drawTexturedModalRect(gui.getLeft() + x, gui.getTop() + y, texture.guiPanelSourceX, texture.guiPanelInnerSourceY, w, h);
 

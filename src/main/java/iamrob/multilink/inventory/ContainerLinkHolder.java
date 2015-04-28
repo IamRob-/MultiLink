@@ -1,21 +1,31 @@
 package iamrob.multilink.inventory;
 
+import com.xcompwiz.mystcraft.api.linking.ILinkInfo;
+import com.xcompwiz.mystcraft.item.ItemLinking;
+import com.xcompwiz.mystcraft.linking.LinkListenerManager;
 import cpw.mods.fml.common.FMLCommonHandler;
 import iamrob.multilink.item.ItemLinkHolder;
+import iamrob.multilink.network.PacketHandler;
+import iamrob.multilink.network.message.MessageCanLink;
 import iamrob.multilink.reference.Textures;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ContainerLinkHolder extends Container
 {
-
     private final Textures.LinkHolder texture = Textures.LinkHolder.instance;
 
     private final EntityPlayer player;
     public final InventoryLinkHolder inventory;
+
+    public List<Byte> linksPermitted;
 
     public ContainerLinkHolder(EntityPlayer player, InventoryLinkHolder linkHolder, boolean slots)
     {
@@ -38,6 +48,43 @@ public class ContainerLinkHolder extends Container
                     addSlotToContainer(new SlotLinkBook(this, linkHolder, player, y + x * 3, texture.holderInvX + texture.holderPixelsX * x, texture.holderInvY + texture.holderPixelsY * y));
                 }
             }
+        }
+    }
+
+    @Override
+    public void detectAndSendChanges()
+    {
+        super.detectAndSendChanges();
+        checkLinksPermitted();
+    }
+
+    private void checkLinksPermitted()
+    {
+        if (!player.worldObj.isRemote) {
+            if (linksPermitted == null) {
+                linksPermitted = new ArrayList<Byte>();
+                ItemStack[] items = inventory.getItems();
+                for (byte i = 0; i < inventory.getSizeInventory(); i++) {
+                    ItemStack stack = items[i];
+                    if (stack != null) {
+                        ILinkInfo info = ((ItemLinking) stack.getItem()).getLinkInfo(stack);
+                        if (LinkListenerManager.isLinkPermitted(player.worldObj, player, info)) {
+
+                            linksPermitted.add(i);
+                        }
+                    }
+                }
+                PacketHandler.INSTANCE.sendTo(new MessageCanLink(linksPermitted), (EntityPlayerMP) player);
+            }
+        }
+    }
+
+    public boolean canLink(int slot)
+    {
+        if (linksPermitted == null) {
+            return false;
+        } else {
+            return linksPermitted.contains((byte) slot);
         }
     }
 

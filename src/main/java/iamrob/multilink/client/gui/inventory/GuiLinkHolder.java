@@ -30,13 +30,13 @@ public class GuiLinkHolder extends GuiContainer
         xSize = textures.guiSizeX;
         ySize = textures.guiSizeY;
 
-        List<ItemStack> inventory = container.getInventory();
+        ItemStack[] inventory = container.getInventoryLinkHolder().getItems();
 
         panels = new GuiPanel[6];
         for (int i = 0; i < 6; i++) {
-            ItemStack stack = inventory.get(i);
+            ItemStack stack = inventory[i];
             if (stack != null) {
-                panels[i] = new GuiPanel(stack, i);
+                panels[i] = new GuiPanel(this, stack, i);
             }
         }
     }

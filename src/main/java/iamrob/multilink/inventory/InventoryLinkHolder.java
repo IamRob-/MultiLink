@@ -46,6 +46,11 @@ public class InventoryLinkHolder implements IInventory, INBTTaggable
         parentItemStack.setTagCompound(nbtTagCompound);
     }
 
+    public ItemStack[] getItems()
+    {
+        return inventory;
+    }
+
     @Override
     public int getSizeInventory()
     {

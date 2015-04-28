@@ -21,7 +21,7 @@ public class MultiLink
 
     /*
     TODO
-
+    - pick linkbooks into linkholder
      */
 
     @Instance(ModInfo.ID)
