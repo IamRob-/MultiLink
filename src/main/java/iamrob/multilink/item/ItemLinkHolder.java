@@ -1,20 +1,23 @@
 package iamrob.multilink.item;
 
 import com.xcompwiz.mystcraft.api.linking.ILinkInfo;
+import com.xcompwiz.mystcraft.block.BlockBookDisplay;
+import com.xcompwiz.mystcraft.entity.EntityLinkbook;
 import com.xcompwiz.mystcraft.item.ItemLinkbook;
 import com.xcompwiz.mystcraft.item.ItemLinking;
 import com.xcompwiz.mystcraft.linking.LinkController;
 import com.xcompwiz.mystcraft.linking.LinkListenerManager;
+import com.xcompwiz.mystcraft.tileentity.TileEntityBookRotateable;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import iamrob.multilink.MultiLink;
 import iamrob.multilink.inventory.InventoryLinkHolder;
 import iamrob.multilink.reference.Names;
+import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
@@ -84,20 +87,21 @@ public class ItemLinkHolder extends ItemMultiLink
 
     public ItemStack[] getInventory(ItemStack stack)
     {
-        NBTTagCompound nbtTagCompound = stack.getTagCompound();
-        ItemStack[] inventory = new ItemStack[InventoryLinkHolder.inventorySize];
-
-        if (nbtTagCompound != null && nbtTagCompound.hasKey(Names.NBT.ITEMS)) {
-            NBTTagList tagList = nbtTagCompound.getTagList(Names.NBT.ITEMS, 10);
-            for (int i = 0; i < tagList.tagCount(); ++i) {
-                NBTTagCompound tagCompound = tagList.getCompoundTagAt(i);
-                byte slotIndex = tagCompound.getByte("Slot");
-                if (slotIndex >= 0 && slotIndex < inventory.length) {
-                    inventory[slotIndex] = ItemStack.loadItemStackFromNBT(tagCompound);
-                }
-            }
-        }
-        return inventory;
+//        NBTTagCompound nbtTagCompound = stack.getTagCompound();
+//        ItemStack[] inventory = new ItemStack[InventoryLinkHolder.inventorySize];
+//
+//        if (nbtTagCompound != null && nbtTagCompound.hasKey(Names.NBT.ITEMS)) {
+//            NBTTagList tagList = nbtTagCompound.getTagList(Names.NBT.ITEMS, 10);
+//            for (int i = 0; i < tagList.tagCount(); ++i) {
+//                NBTTagCompound tagCompound = tagList.getCompoundTagAt(i);
+//                byte slotIndex = tagCompound.getByte("Slot");
+//                if (slotIndex >= 0 && slotIndex < inventory.length) {
+//                    inventory[slotIndex] = ItemStack.loadItemStackFromNBT(tagCompound);
+//                }
+//            }
+//        }
+        InventoryLinkHolder inv = new InventoryLinkHolder(stack);
+        return inv.getItems();
     }
 
     @Override
@@ -118,6 +122,120 @@ public class ItemLinkHolder extends ItemMultiLink
             }
         }
         return itemstack;
+    }
+
+    @Override
+    public boolean onItemUse(ItemStack p_77648_1_, EntityPlayer p_77648_2_, World p_77648_3_, int p_77648_4_, int p_77648_5_, int p_77648_6_, int p_77648_7_, float p_77648_8_, float p_77648_9_, float p_77648_10_)
+    {
+        return false;
+    }
+
+    @Override
+    public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
+    {
+        if (world.isRemote || player.isSneaking())
+            return false;
+
+        Block block = world.getBlock(x, y, z);
+
+        if (block instanceof BlockBookDisplay) {
+            final TileEntityBookRotateable tile = (TileEntityBookRotateable) world.getTileEntity(x, y, z);
+            if (tile == null) {
+                return true;
+            }
+            List<Integer> slotList = getSlotList(stack);
+
+            if (tile.getBook() == null) {
+                if (slotList.size() == 0) {
+                    return false;
+                }
+                ItemStack[] items = getInventory(stack);
+                int slot = firstBookSlot(slotList);
+                ItemStack linkBook = items[slot];
+                if (linkBook != null && tile.isItemValidForSlot(0, linkBook)) {
+                    tile.setBook(linkBook);
+                    InventoryLinkHolder inv = new InventoryLinkHolder(stack);
+                    inv.setInventorySlotContents(slot, null);
+                    inv.save();
+                    return true;
+                }
+            } else {
+                if (slotList.size() == 6) {
+                    return false;
+                }
+                ItemStack linkBook = tile.getBook();
+                InventoryLinkHolder inv = new InventoryLinkHolder(stack);
+                inv.setInventorySlotContents(firstAvailableSlot(slotList), linkBook);
+                inv.save();
+                tile.setBook(null);
+                return true;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity)
+    {
+        if (!(entity instanceof EntityLinkbook)) {
+            return false;
+        }
+        List<Integer> slotList = getSlotList(stack);
+        if (slotList.size() == 6) {
+            return false;
+        }
+        EntityLinkbook link = (EntityLinkbook) entity;
+        ItemStack linkBook = link.getStackInSlot(0);
+        InventoryLinkHolder inv = new InventoryLinkHolder(stack);
+        inv.setInventorySlotContents(firstAvailableSlot(slotList), linkBook);
+        inv.save();
+        link.inventory.setBook(null);
+        return true;
+    }
+
+    private List<Integer> getSlotList(ItemStack book)
+    {
+        List<Integer> slots = new ArrayList<Integer>();
+        int i = 0;
+        for (ItemStack stack : getInventory(book)) {
+            if (stack != null) {
+                slots.add(i);
+            }
+            i++;
+        }
+        return slots;
+    }
+
+    private int firstAvailableSlot(List<Integer> slots)
+    {
+        for (int i = 0; i < 6; i++) {
+            if (!slots.contains(i)) {
+                return i;
+            }
+        }
+        return 5;
+    }
+
+    private int firstBookSlot(List<Integer> slots)
+    {
+        for (int i = 0; i < 6; i++) {
+            if (slots.contains(i)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public boolean isItemTool(ItemStack p_77616_1_)
+    {
+        return false;
+    }
+
+    @Override
+    public int getItemEnchantability()
+    {
+        return 1;
     }
 
     public void linkActivate(int id, World world, EntityPlayer player)

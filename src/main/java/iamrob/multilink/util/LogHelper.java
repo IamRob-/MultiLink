@@ -2,6 +2,7 @@ package iamrob.multilink.util;
 
 import cpw.mods.fml.common.FMLLog;
 import iamrob.multilink.reference.ModInfo;
+import net.minecraft.util.Vec3;
 import org.apache.logging.log4j.Level;
 
 public class LogHelper
@@ -10,6 +11,26 @@ public class LogHelper
     public static void log(Level logLevel, Object object)
     {
         FMLLog.log(ModInfo.NAME, logLevel, String.valueOf(object));
+    }
+
+    public static void logVecArray(Vec3[] vecs)
+    {
+        StringBuilder str = new StringBuilder();
+        str.append("[");
+        if (vecs == null) {
+            str.append("null");
+        } else {
+            int i = 0;
+            for (Vec3 vec : vecs) {
+                if (vec == null)
+                    continue;
+                str.append(String.format("%s:[%s,%s,%s]", i, vec.xCoord, vec.yCoord, vec.zCoord));
+                str.append(",");
+                i++;
+            }
+        }
+        str.append("]");
+        info(str.toString());
     }
 
     public static void all(Object object)

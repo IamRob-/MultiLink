@@ -1,7 +1,10 @@
 package iamrob.multilink.client.gui.inventory.element;
 
+import com.xcompwiz.mystcraft.api.linking.ILinkInfo;
 import com.xcompwiz.mystcraft.item.ItemLinkbook;
 import com.xcompwiz.mystcraft.item.ItemLinking;
+import com.xcompwiz.mystcraft.world.WorldProviderMyst;
+import com.xcompwiz.mystcraft.world.agedata.AgeData;
 import iamrob.multilink.client.gui.inventory.GuiLinkHolder;
 import iamrob.multilink.network.PacketHandler;
 import iamrob.multilink.network.message.MessageActivateBook;
@@ -23,9 +26,7 @@ public class GuiPanel
     private int y;
     private int w;
     private int h;
-    private double xCol;
-    private double yCol;
-    private double zCol;
+    private Vec3 col;
 
     private int id;
 
@@ -43,26 +44,18 @@ public class GuiPanel
 
         ItemLinking item = (ItemLinking) stack.getItem();
         int dimId = item.getLinkInfo(stack).getDimensionUID();
-        Vec3 col;
+        col = null;
+        refreshColours(gui);
+    }
 
-        switch (dimId) {
-            case 1:
-                col = Vec3.createVectorHelper(0.5F, 0.4F, 0.7F);
-                break;
-            case -1:
-                col = Vec3.createVectorHelper(0.8F, 0.2F, 0.2F);
-                break;
-            case 0:
-                col = Vec3.createVectorHelper(0.3, 0.6F, 1);
-                break;
-            default:
-                col = Vec3.createVectorHelper(0.3, 0.6F, 1);
-                break;
+    private void refreshColours(GuiLinkHolder gui)
+    {
+        Vec3[] skyColours = gui.container.skyColours;
+
+        if (skyColours != null && (col == null
+                || (col.xCoord == 0.0 && col.yCoord == 0.0 && col.zCoord == 0.0))) {
+            col = skyColours[id];
         }
-        xCol = col.xCoord;
-        yCol = col.yCoord;
-        zCol = col.zCoord;
-
     }
 
     public boolean inRectangle(GuiLinkHolder gui, int mouseX, int mouseY)
@@ -89,9 +82,16 @@ public class GuiPanel
         if (link == null || !(link.getItem() instanceof ItemLinkbook))
             return;
         ItemLinkbook item = (ItemLinkbook) link.getItem();
-        int dimID = item.getLinkInfo(link).getDimensionUID();
+        ILinkInfo info = item.getLinkInfo(link);
+        int dimID = info.getDimensionUID();
         String title = item.getTitle(link);
-        String dim = WorldProvider.getProviderForDimension(dimID).getDimensionName();
+        WorldProvider world = WorldProvider.getProviderForDimension(dimID);
+        String dim;
+        if (world instanceof WorldProviderMyst) {
+            dim = AgeData.getAge(dimID, true).getAgeName();
+        } else {
+            dim = world.getDimensionName();
+        }
         String str = title.equals(dim) ? title : title + "\n" + EnumChatFormatting.GRAY + dim;
         drawString(gui, x, y, str);
     }
@@ -106,11 +106,19 @@ public class GuiPanel
             gui.drawTexturedModalRect(gui.getLeft() + x, gui.getTop() + y, texture.guiPanelSourceX, texture.guiPanelSourceY, w, h);
 
             canLink = gui.container.canLink(id);
+
+            refreshColours(gui);
+            if (col == null) {
+                col = Vec3.createVectorHelper(0F, 0F, 0F);
+            }
+
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             GL11.glDepthMask(false);
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GL11.glColor4d(xCol, yCol, zCol, canLink ? 1 : 0.6);
+
+            GL11.glColor4d(col.xCoord, col.yCoord, col.zCoord, canLink ? 1 : 0.5);
+
             GL11.glDisable(GL11.GL_ALPHA_TEST);
 
             gui.drawTexturedModalRect(gui.getLeft() + x, gui.getTop() + y, texture.guiPanelSourceX, texture.guiPanelInnerSourceY, w, h);
