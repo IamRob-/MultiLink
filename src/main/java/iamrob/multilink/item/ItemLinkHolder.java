@@ -193,6 +193,12 @@ public class ItemLinkHolder extends ItemMultiLink
         return true;
     }
 
+    @Override
+    public int getMaxItemUseDuration(ItemStack stack)
+    {
+        return 1;
+    }
+
     private List<Integer> getSlotList(ItemStack book)
     {
         List<Integer> slots = new ArrayList<Integer>();

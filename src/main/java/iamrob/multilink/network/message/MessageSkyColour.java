@@ -26,6 +26,7 @@ public class MessageSkyColour implements IMessage
     @Override
     public void toBytes(ByteBuf buf)
     {
+//        LogHelper.info("to:");
         buf.writeByte(skyColours.length);
         for (byte i = 0; i < skyColours.length; i++) {
             Vec3 vec = skyColours[i];
@@ -36,13 +37,13 @@ public class MessageSkyColour implements IMessage
             buf.writeDouble(vec.yCoord);
             buf.writeDouble(vec.zCoord);
         }
-//        LogHelper.info("to:");
 //        LogHelper.logVecArray(skyColours);
     }
 
     @Override
     public void fromBytes(ByteBuf buf)
     {
+//        LogHelper.info("from:");
         byte length = buf.readByte();
         skyColours = new Vec3[length];
         while (buf.isReadable()) {
@@ -52,7 +53,6 @@ public class MessageSkyColour implements IMessage
             double z = buf.readDouble();
             skyColours[index] = Vec3.createVectorHelper(x, y, z);
         }
-//        LogHelper.info("from:");
 //        LogHelper.logVecArray(skyColours);
     }
 
@@ -62,13 +62,17 @@ public class MessageSkyColour implements IMessage
         public IMessage onMessage(MessageSkyColour message, MessageContext ctx)
         {
             Container container = Minecraft.getMinecraft().thePlayer.openContainer;
+//            LogHelper.info("Container: " + container);
             if (container == null || !(container instanceof ContainerLinkHolder)) {
                 return null;
             }
 //            LogHelper.info("onMessage:");
 //            LogHelper.logVecArray(message.skyColours);
 
-            ((ContainerLinkHolder) container).skyColours = message.skyColours;
+            ContainerLinkHolder linkHolder = (ContainerLinkHolder) container;
+            linkHolder.skyColours = message.skyColours;
+//            LogHelper.info("saving...");
+            linkHolder.saveSkyColours();
             return null;
         }
     }

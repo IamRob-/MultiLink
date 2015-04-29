@@ -53,7 +53,7 @@ public class GuiPanel
         Vec3[] skyColours = gui.container.skyColours;
 
         if (skyColours != null && (col == null
-                || (col.xCoord == 0.0 && col.yCoord == 0.0 && col.zCoord == 0.0))) {
+                || (col.xCoord == 1.0 && col.yCoord == 1.0 && col.zCoord == 1.0))) {
             col = skyColours[id];
         }
     }
@@ -109,7 +109,7 @@ public class GuiPanel
 
             refreshColours(gui);
             if (col == null) {
-                col = Vec3.createVectorHelper(0F, 0F, 0F);
+                col = Vec3.createVectorHelper(1F, 1F, 1F);
             }
 
             GL11.glEnable(GL11.GL_BLEND);

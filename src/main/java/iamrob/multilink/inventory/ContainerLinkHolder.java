@@ -9,13 +9,13 @@ import iamrob.multilink.network.PacketHandler;
 import iamrob.multilink.network.message.MessageCanLink;
 import iamrob.multilink.network.message.MessageSkyColour;
 import iamrob.multilink.reference.Textures;
-import iamrob.multilink.util.LogHelper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
@@ -62,7 +62,7 @@ public class ContainerLinkHolder extends Container
     {
         super.detectAndSendChanges();
         checkLinksPermitted();
-        checkSkyColours();
+        loadSkyColours();
     }
 
     private void checkLinksPermitted()
@@ -84,56 +84,101 @@ public class ContainerLinkHolder extends Container
         }
     }
 
-    private void checkSkyColours()
+    private void refreshSkyColours(int i)
     {
-        if (!player.worldObj.isRemote && skyColours == null) {
-            skyColours = new Vec3[inventory.getSizeInventory()];
+        if (!player.worldObj.isRemote) {
             ItemStack[] items = inventory.getItems();
-            for (int i = 0; i < inventory.getSizeInventory(); i++) {
-                ItemStack stack = items[i];
-                if (stack != null) {
-                    ILinkInfo info = ((ItemLinking) stack.getItem()).getLinkInfo(stack);
-                    int dimId = info.getDimensionUID();
-                    Vec3 col;
+            ItemStack stack = items[i];
+            if (stack != null) {
+                ILinkInfo info = ((ItemLinking) stack.getItem()).getLinkInfo(stack);
+                int dimId = info.getDimensionUID();
+                Vec3 col;
 
-                    switch (dimId) {
-                        case -1:
-                            col = Vec3.createVectorHelper(0.20000000298023224, 0.029999999329447746, 0.029999999329447746);
-                            break;
-                        case 0:
-                            col = Vec3.createVectorHelper(0.45490196347236633, 0.6705882549285889, 1.0);
-                            break;
-                        case 1:
-                            col = Vec3.createVectorHelper(0.5, 0.4000000059604645, 0.699999988079071);
-                            break;
-                        default:
-                            col = null;
-                    }
-
-                    if (col == null) {
-                        WorldServer world = DimensionManager.getWorld(dimId);
-                        boolean unload = false;
-                        if (world == null) {
-                            DimensionManager.initDimension(dimId);
-                            world = DimensionManager.getWorld(dimId);
-                            unload = true;
-                        }
-                        col = world.getSkyColor(player, 0F);
-
-                        if (col.xCoord == 0.0 && col.yCoord == 0.0 && col.zCoord == 0.0) {
-                            col = DimensionManager.getProvider(dimId).getFogColor(0F, 0F);
-                        }
-                        if (unload) {
-                            DimensionManager.unloadWorld(dimId);
-                        }
-                    }
-                    skyColours[i] = col;
-                    LogHelper.info(dimId + ": " + col);
+                switch (dimId) {
+                    case -1:
+                        col = Vec3.createVectorHelper(0.20000000298023224, 0.029999999329447746, 0.029999999329447746);
+                        break;
+                    case 0:
+                        col = Vec3.createVectorHelper(0.45490196347236633, 0.6705882549285889, 1.0);
+                        break;
+                    case 1:
+                        col = Vec3.createVectorHelper(0.5, 0.4000000059604645, 0.699999988079071);
+                        break;
+                    default:
+                        col = null;
                 }
+
+                if (col == null) {
+                    WorldServer world = DimensionManager.getWorld(dimId);
+                    boolean unload = false;
+                    if (world == null) {
+                        DimensionManager.initDimension(dimId);
+                        world = DimensionManager.getWorld(dimId);
+                        unload = true;
+                    }
+                    col = world.getSkyColor(player, 0F);
+
+                    if (isBlack(col)) {
+                        col = DimensionManager.getProvider(dimId).getFogColor(0F, 0F);
+                    }
+                    if (unload) {
+                        DimensionManager.unloadWorld(dimId);
+                    }
+                }
+                skyColours[i] = col;
+//                LogHelper.info(dimId + ": " + col);
             }
+
+            saveSkyColours();
+        }
+    }
+
+    public void saveSkyColours()
+    {
+        if (skyColours == null)
+            return;
+
+        for (byte i = 0; i < inventory.getSizeInventory(); i++) {
+            ItemStack linkBook = inventory.getStackInSlot(i);
+            if (linkBook != null && skyColours[i] != null) {
+                Vec3 col = skyColours[i];
+                NBTTagCompound tag = new NBTTagCompound();
+                tag.setDouble("X", col.xCoord);
+                tag.setDouble("Y", col.yCoord);
+                tag.setDouble("Z", col.zCoord);
+                if (linkBook.getTagCompound() == null)
+                    linkBook.setTagCompound(new NBTTagCompound());
+                linkBook.getTagCompound().setTag("SkyColor", tag);
+            }
+        }
+
+        if (!player.worldObj.isRemote) {
             PacketHandler.INSTANCE.sendTo(new MessageSkyColour(skyColours), (EntityPlayerMP) player);
         }
     }
+
+    public void loadSkyColours()
+    {
+        if (skyColours == null) {
+            skyColours = new Vec3[inventory.getSizeInventory()];
+        } else {
+            return;
+        }
+        for (byte i = 0; i < inventory.getSizeInventory(); i++) {
+            ItemStack linkBook = inventory.getStackInSlot(i);
+            if (linkBook == null) continue;
+
+            if (linkBook.getTagCompound() != null && linkBook.getTagCompound().hasKey("SkyColor")) {
+                NBTTagCompound tag = linkBook.getTagCompound().getCompoundTag("SkyColor");
+                skyColours[i] = Vec3.createVectorHelper(tag.getDouble("X"), tag.getDouble("Y"), tag.getDouble("Z"));
+            } else {
+                refreshSkyColours(i);
+            }
+        }
+
+        saveSkyColours();
+    }
+
 
     public boolean canLink(int slot)
     {
@@ -206,6 +251,14 @@ public class ContainerLinkHolder extends Container
     public InventoryLinkHolder getInventoryLinkHolder()
     {
         return inventory;
+    }
+
+    public boolean isBlack(Vec3 vec)
+    {
+        if (vec == null)
+            return true;
+        else
+            return vec.xCoord == 0.0 && vec.yCoord == 0.0 && vec.zCoord == 0.0;
     }
 
     public class SlotLinkBook extends Slot
