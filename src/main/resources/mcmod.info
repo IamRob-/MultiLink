@@ -2,15 +2,15 @@
 {
   "modid": "${modid}",
   "name": "${name}",
-  "description": "",
+  "description": "Addon for Myscraft!",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
-  "authorList": [""],
+  "authorList": ["IamRob"],
   "credits": "",
   "logoFile": "",
   "screenshots": [],
-  "dependencies": []
+  "dependencies": ["Mystcraft"]
 }
 ]

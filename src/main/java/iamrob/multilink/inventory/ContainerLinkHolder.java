@@ -126,7 +126,6 @@ public class ContainerLinkHolder extends Container
                     }
                 }
                 skyColours[i] = col;
-//                LogHelper.info(dimId + ": " + col);
             }
 
             saveSkyColours();
@@ -235,6 +234,14 @@ public class ContainerLinkHolder extends Container
         }
 
         return newItemStack;
+    }
+
+    @Override
+    public ItemStack slotClick(int index, int par1, int par2, EntityPlayer player)
+    {
+        ItemStack stack = super.slotClick(index, par1, par2, player);
+        saveInventory(player);
+        return stack;
     }
 
     public void saveInventory(EntityPlayer player)
