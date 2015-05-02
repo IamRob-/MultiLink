@@ -159,7 +159,7 @@ public class ItemLinkHolder extends ItemMultiLink
                     inv.save();
                     return true;
                 }
-            } else {
+            } else if (tile.getBook().getItem() instanceof ItemLinkbook) {
                 if (slotList.size() == 6) {
                     return false;
                 }
@@ -186,6 +186,9 @@ public class ItemLinkHolder extends ItemMultiLink
         }
         EntityLinkbook link = (EntityLinkbook) entity;
         ItemStack linkBook = link.getStackInSlot(0);
+        if (linkBook == null || !(linkBook.getItem() instanceof ItemLinkbook)) {
+            return false;
+        }
         InventoryLinkHolder inv = new InventoryLinkHolder(stack);
         inv.setInventorySlotContents(firstAvailableSlot(slotList), linkBook);
         inv.save();

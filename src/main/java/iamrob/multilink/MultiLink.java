@@ -21,7 +21,10 @@ public class MultiLink
 
     /*
     TODO
-
+    - http://redd.it/1z0tkh
+    - Make link holder hold link pages.
+    - Way to extract link pages.
+    - Nexus block.
      */
 
     @Instance(ModInfo.ID)
