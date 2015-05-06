@@ -12,22 +12,24 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class CreativeTabMultiLink extends CreativeTabs {
+public class CreativeTabMultiLink extends CreativeTabs
+{
 
     private List<ItemStack> forcelist = new ArrayList();
 
-    public CreativeTabMultiLink() {
+    public CreativeTabMultiLink()
+    {
         super(ModInfo.ID.toLowerCase());
     }
 
     @Override
-    public void displayAllReleventItems(List list) {
+    public void displayAllReleventItems(List list)
+    {
         Iterator iterator = Item.itemRegistry.iterator();
 
         while (iterator.hasNext()) {
-            Item item = (Item)iterator.next();
-            if (item != null)
-            {
+            Item item = (Item) iterator.next();
+            if (item != null) {
                 for (CreativeTabs tab : item.getCreativeTabs()) {
                     if (tab == this)
                         item.getSubItems(item, this, list);
@@ -47,7 +49,8 @@ public class CreativeTabMultiLink extends CreativeTabs {
 
     @Override
     @SideOnly(Side.CLIENT)
-    public Item getTabIconItem() {
+    public Item getTabIconItem()
+    {
         return ModItems.linkHolder;
     }
 }

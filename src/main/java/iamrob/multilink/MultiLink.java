@@ -8,7 +8,9 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import iamrob.multilink.handler.GuiHandler;
+import iamrob.multilink.init.ModBlocks;
 import iamrob.multilink.init.ModItems;
+import iamrob.multilink.init.ModTileEntities;
 import iamrob.multilink.network.PacketHandler;
 import iamrob.multilink.proxy.IProxy;
 import iamrob.multilink.reference.ModInfo;
@@ -18,14 +20,6 @@ import iamrob.multilink.util.LogHelper;
 @Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, dependencies = "required-after:Mystcraft")
 public class MultiLink
 {
-
-    /*
-    TODO
-    - http://redd.it/1z0tkh
-    - Make link holder hold link pages.
-    - Way to extract link pages.
-    - Nexus block.
-     */
 
     @Instance(ModInfo.ID)
     public static MultiLink instance;
@@ -39,6 +33,7 @@ public class MultiLink
         PacketHandler.init();
 
         ModItems.init();
+        ModBlocks.init();
 
         LogHelper.info("Pre Initialization Complete!");
     }
@@ -47,6 +42,10 @@ public class MultiLink
     public void init(FMLInitializationEvent event)
     {
         GuiHandler.register();
+
+        ModTileEntities.init();
+
+        proxy.initRendering();
 
         LogHelper.info("Initialization Complete!");
     }

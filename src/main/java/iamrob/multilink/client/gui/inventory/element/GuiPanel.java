@@ -1,25 +1,20 @@
 package iamrob.multilink.client.gui.inventory.element;
 
-import com.xcompwiz.mystcraft.api.linking.ILinkInfo;
-import com.xcompwiz.mystcraft.item.ItemLinkbook;
-import com.xcompwiz.mystcraft.item.ItemLinking;
-import com.xcompwiz.mystcraft.world.WorldProviderMyst;
-import com.xcompwiz.mystcraft.world.agedata.AgeData;
 import iamrob.multilink.client.gui.inventory.GuiLinkHolder;
+import iamrob.multilink.item.ItemLinkPage;
 import iamrob.multilink.network.PacketHandler;
 import iamrob.multilink.network.message.MessageActivateBook;
 import iamrob.multilink.reference.Textures;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.Vec3;
-import net.minecraft.world.WorldProvider;
 import org.lwjgl.opengl.GL11;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GuiPanel
 {
-    private ItemStack link;
+    private ItemStack linkPage;
     private final Textures.LinkHolder texture = Textures.LinkHolder.instance;
 
     private int x;
@@ -28,22 +23,21 @@ public class GuiPanel
     private int h;
     private Vec3 col;
 
-    private int id;
+    private int slot;
 
     boolean canLink = false;
 
-    public GuiPanel(GuiLinkHolder gui, ItemStack stack, int id)
+    public GuiPanel(GuiLinkHolder gui, ItemStack stack, int slot)
     {
-        this.link = stack;
-        this.id = id;
+        this.linkPage = stack;
+        this.slot = slot;
 
-        x = (texture.guiPanelStartX + (id < 3 ? 0 : 1) * texture.guiPanelPixelsX);
-        y = (texture.guiPanelStartY + (id < 3 ? id : id - 3) * texture.guiPanelPixelsY);
+        x = texture.guiPanelStartX;
+        y = texture.guiPanelStartY;
         w = texture.guiPanelWidth;
         h = texture.guiPanelHeight;
 
-        ItemLinking item = (ItemLinking) stack.getItem();
-        int dimId = item.getLinkInfo(stack).getDimensionUID();
+        ItemLinkPage item = (ItemLinkPage) stack.getItem();
         col = null;
         refreshColours(gui);
     }
@@ -53,7 +47,7 @@ public class GuiPanel
         Vec3[] skyColours = gui.container.skyColours;
 
         if (skyColours != null && (col == null || (col.xCoord == 1.0 && col.yCoord == 1.0 && col.zCoord == 1.0))) {
-            col = skyColours[id];
+            col = skyColours[slot];
         }
     }
 
@@ -64,12 +58,10 @@ public class GuiPanel
         return x <= mouseX && mouseX <= x + w && y <= mouseY && mouseY <= y + h;
     }
 
-    public void drawString(GuiLinkHolder gui, int mouseX, int mouseY, String str)
+    public void drawString(GuiLinkHolder gui, int mouseX, int mouseY, List<String> list)
     {
         if (inRectangle(gui, mouseX, mouseY)) {
-            gui.drawHoverString(Arrays.asList(str.split("\n")), mouseX
-                    - (gui.getLeft() + (gui.getXSize() / 2)), mouseY
-                    - gui.getTop());
+            gui.drawHoverString(list, mouseX - (gui.getLeft() + (gui.getXSize() / 2)), mouseY - gui.getTop());
         }
     }
 
@@ -78,39 +70,36 @@ public class GuiPanel
         if (!inRectangle(gui, x, y)) {
             return;
         }
-        if (link == null || !(link.getItem() instanceof ItemLinkbook))
+        if (linkPage == null || !(linkPage.getItem() instanceof ItemLinkPage))
             return;
-        ItemLinkbook item = (ItemLinkbook) link.getItem();
-        ILinkInfo info = item.getLinkInfo(link);
-        int dimID = info.getDimensionUID();
-        String title = item.getTitle(link);
-        WorldProvider world = WorldProvider.getProviderForDimension(dimID);
-        String dim;
-        if (world instanceof WorldProviderMyst) {
-            dim = AgeData.getAge(dimID, true).getAgeName();
-        } else {
-            dim = world.getDimensionName();
-        }
-        String str = title.equals(dim) ? title : title + "\n" + EnumChatFormatting.GRAY + dim;
-        drawString(gui, x, y, str);
+        if (gui.container.getCurrentPage() != linkPage || !(gui.getCurrentPageIndex() < gui.container.getPageCount()))
+            return;
+
+        ItemLinkPage item = (ItemLinkPage) linkPage.getItem();
+        List<String> list = new ArrayList<String>();
+        item.addInformation(linkPage, gui.container.player, list, false);
+
+        drawString(gui, x, y, list);
     }
 
     public void draw(GuiLinkHolder gui)
     {
-        ItemStack[] inventory = gui.container.getInventoryLinkHolder().getItems();
+        ItemStack[] inv = gui.container.inventoryLinkHolder.getItems();
 
-        ItemStack stack = inventory[id];
+        ItemStack stack = inv[slot];
+
         if (stack != null) {
             GL11.glColor4f(1F, 1F, 1F, 1F);
             gui.drawTexturedModalRect(gui.getLeft() + x, gui.getTop() + y, texture.guiPanelSourceX, texture.guiPanelSourceY, w, h);
 
-            canLink = gui.container.canLink(id);
+            canLink = gui.container.canLink(slot);
 
             refreshColours(gui);
             if (col == null) {
                 col = Vec3.createVectorHelper(1.0, 1.0, 1.0);
             }
 
+            GL11.glPushMatrix();
             GL11.glEnable(GL11.GL_BLEND);
             GL11.glDisable(GL11.GL_DEPTH_TEST);
             GL11.glDepthMask(false);
@@ -118,17 +107,16 @@ public class GuiPanel
 
             GL11.glColor4d(col.xCoord, col.yCoord, col.zCoord, canLink ? 1 : 0.5);
 
-            GL11.glDisable(GL11.GL_ALPHA_TEST);
-
             gui.drawTexturedModalRect(gui.getLeft() + x, gui.getTop() + y, texture.guiPanelSourceX, texture.guiPanelInnerSourceY, w, h);
+            GL11.glDisable(GL11.GL_ALPHA_TEST);
+            GL11.glPopMatrix();
 
-            GL11.glColor4f(1F, 1F, 1F, 1F);
         }
     }
 
     public void activate()
     {
-        PacketHandler.INSTANCE.sendToServer(new MessageActivateBook((byte) id));
+        PacketHandler.INSTANCE.sendToServer(new MessageActivateBook((byte) slot));
     }
 
 }

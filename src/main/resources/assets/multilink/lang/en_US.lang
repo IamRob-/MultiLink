@@ -1,2 +1,6 @@
-item.multilink:linkHolder.name=Link Holder
 itemGroup.multilink=MultiLink
+
+item.multilink:linkHolder.name=Link Holder
+item.multilink:linkPage.name=Link Page
+
+tile.multilink:bookUnbinder.name=Book Unbinder

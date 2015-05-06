@@ -1,9 +1,17 @@
 package iamrob.multilink.proxy;
 
-public class ServerProxy extends CommonProxy {
+public class ServerProxy extends CommonProxy
+{
 
     @Override
-    public void createCreativeTabs() {
+    public void createCreativeTabs()
+    {
+
+    }
+
+    @Override
+    public void initRendering()
+    {
 
     }
 }

@@ -14,7 +14,7 @@ public class InventoryLinkHolder implements IInventory, INBTTaggable
 {
 
     public ItemStack parentItemStack;
-    public static int inventorySize = 6;
+    public static final int inventorySize = 6;
     private ItemStack[] inventory;
 
     public InventoryLinkHolder(ItemStack stack)
@@ -84,13 +84,11 @@ public class InventoryLinkHolder implements IInventory, INBTTaggable
     @Override
     public ItemStack getStackInSlotOnClosing(int slot)
     {
-        if (inventory[slot] != null) {
-            ItemStack stack = getStackInSlot(slot);
+        ItemStack itemStack = getStackInSlot(slot);
+        if (itemStack != null) {
             setInventorySlotContents(slot, null);
-            return stack;
-        } else {
-            return null;
         }
+        return itemStack;
     }
 
     @Override
@@ -147,7 +145,7 @@ public class InventoryLinkHolder implements IInventory, INBTTaggable
     @Override
     public boolean isItemValidForSlot(int slot, ItemStack stack)
     {
-        return stack.getItem() == com.xcompwiz.mystcraft.data.ModItems.linkbook;
+        return stack.getItem() == ModItems.linkPage;
     }
 
     @Override
