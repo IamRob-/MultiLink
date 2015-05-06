@@ -1,8 +1,10 @@
 *.DS_Store
+/ToDo List
 /.gradle
 /.idea
 /.eclipse
 /.ui
 /*.txt
 /*.iml
+/*.ipr
 
