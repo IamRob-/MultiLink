@@ -31,7 +31,7 @@ public class ItemLinkHolder extends ItemMultiLink
         setCreativeTab(CreativeTabs.tabTransport);
 
         setMaxStackSize(1);
-        setMaxDamage(32);
+        setMaxDamage(16);
     }
 
     @SideOnly(Side.CLIENT)

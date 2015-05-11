@@ -10,6 +10,7 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import iamrob.multilink.handler.GuiHandler;
 import iamrob.multilink.init.ModBlocks;
 import iamrob.multilink.init.ModItems;
+import iamrob.multilink.init.ModRecipes;
 import iamrob.multilink.init.ModTileEntities;
 import iamrob.multilink.network.PacketHandler;
 import iamrob.multilink.proxy.IProxy;
@@ -46,6 +47,8 @@ public class MultiLink
         ModTileEntities.init();
 
         proxy.initRendering();
+
+        ModRecipes.init();
 
         LogHelper.info("Initialization Complete!");
     }
