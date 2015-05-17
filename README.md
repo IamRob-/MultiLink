@@ -3,4 +3,4 @@
 **REQUIRES MYSTCRAFT**
 
 ##Description:
-[Imgur album explaining mod.](http://imgur.com/a/6auvz).
+[Imgur album explaining mod.](http://imgur.com/a/6auvz)
